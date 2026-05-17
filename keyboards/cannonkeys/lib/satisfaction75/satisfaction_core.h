@@ -44,6 +44,8 @@ enum custom_encoder_behavior {
 enum oled_modes {
   OLED_DEFAULT,
   OLED_TIME,
+  OLED_BONGO,
+  OLED_BONGO_MIN,
   OLED_OFF,
   _NUM_OLED_MODES
 };
@@ -60,6 +62,7 @@ extern uint8_t oled_mode;
 extern bool oled_repaint_requested;
 extern bool oled_wakeup_requested;
 extern uint32_t oled_sleep_timer;
+extern bool time_24h_mode;
 
 // Encoder Behavior
 extern uint8_t encoder_value;
@@ -90,6 +93,8 @@ uint16_t retrieve_custom_encoder_config(uint8_t encoder_idx, uint8_t behavior);
 void set_custom_encoder_config(uint8_t encoder_idx, uint8_t behavior, uint16_t new_code);
 
 void update_time_config(int8_t increment);
+
+char* get_time_str(void);
 
 void oled_request_wakeup(void);
 void oled_request_repaint(void);

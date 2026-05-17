@@ -17,6 +17,7 @@
 #include "dynamic_keymap.h"
 #include "eeprom.h"
 #include "version.h" // for QMK_BUILDDATE used in EEPROM magic
+#include <stdio.h>
 
 /* Artificial delay added to get media keys to work in the encoder*/
 #define MEDIA_KEY_DELAY 10
@@ -32,6 +33,7 @@ uint8_t oled_mode = OLED_DEFAULT;
 bool oled_repaint_requested = false;
 bool oled_wakeup_requested = false;
 uint32_t oled_sleep_timer;
+bool time_24h_mode = false;
 
 uint8_t encoder_value = 32;
 uint8_t encoder_mode = ENC_MODE_VOLUME;
@@ -47,6 +49,31 @@ int8_t year_config = 0;
 int8_t month_config = 0;
 int8_t day_config = 0;
 uint8_t previous_encoder_mode = 0;
+
+char* get_time_str(void) {
+    uint8_t  hour   = last_minute / 60;
+    uint16_t minute = last_minute % 60;
+
+    if (encoder_mode == ENC_MODE_CLOCK_SET) {
+        hour   = hour_config;
+        minute = minute_config;
+    }
+
+    static char time_str[8] = "";
+
+    if (time_24h_mode) {
+        snprintf(time_str, sizeof(time_str), "%02hhu:%02hu", hour, minute);
+    } else {
+        bool is_pm = (hour / 12) > 0;
+        hour       = hour % 12;
+        if (hour == 0) {
+            hour = 12;
+        }
+        snprintf(time_str, sizeof(time_str), "%02hhu:%02hu%s", hour, minute, is_pm ? "pm" : "am");
+    }
+
+    return time_str;
+}
 
 void board_init(void) {
   SYSCFG->CFGR1 |= SYSCFG_CFGR1_I2C1_DMA_RMP;
@@ -236,6 +263,12 @@ bool process_record_kb(uint16_t keycode, keyrecord_t *record) {
         if (record->event.pressed) {
           oled_mode = (oled_mode + 1) % _NUM_OLED_MODES;
         }
+      }
+      return false;
+    case TIME_24H:
+      if (record->event.pressed) {
+        time_24h_mode = !time_24h_mode;
+        oled_request_repaint();
       }
       return false;
     case CLOCK_SET:

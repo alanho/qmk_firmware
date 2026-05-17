@@ -6,5 +6,6 @@
 enum my_keycodes {
   ENC_PRESS = QK_KB_0,
   CLOCK_SET,
-  OLED_TOGG
+  OLED_TOGG,
+  TIME_24H
 };

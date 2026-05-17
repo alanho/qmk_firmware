@@ -17,6 +17,10 @@ void draw_clock(void);
 #ifdef OLED_ENABLE
 #include "oled_driver.h"
 
+#ifdef BONGO_ENABLE
+#include "bongo.h"
+#endif
+
 oled_rotation_t oled_init_kb(oled_rotation_t rotation) { return OLED_ROTATION_0; }
 
 bool oled_task_kb(void) {
@@ -37,6 +41,14 @@ bool oled_task_kb(void) {
         case OLED_TIME:
             draw_clock();
             break;
+#ifdef BONGO_ENABLE
+        case OLED_BONGO:
+            draw_bongo(false);
+            break;
+        case OLED_BONGO_MIN:
+            draw_bongo(true);
+            break;
+#endif
     }
     return false;
 }
@@ -142,27 +154,6 @@ static char* get_enc_mode(void) {
     }
 }
 
-static char* get_time(void) {
-    uint8_t  hour   = last_minute / 60;
-    uint16_t minute = last_minute % 60;
-
-    if (encoder_mode == ENC_MODE_CLOCK_SET) {
-        hour   = hour_config;
-        minute = minute_config;
-    }
-
-    bool is_pm = (hour / 12) > 0;
-    hour       = hour % 12;
-    if (hour == 0) {
-        hour = 12;
-    }
-
-    static char time_str[8] = "";
-    snprintf(time_str, sizeof(time_str), "%02hhu:%02hu%s", hour, minute, is_pm ? "pm" : "am");
-
-    return time_str;
-}
-
 static char* get_date(void) {
     int16_t year  = last_timespec.year + 1980;
     int8_t  month = last_timespec.month;
@@ -204,7 +195,7 @@ void draw_default(void) {
     oled_write_P(PSTR("G"), mod_state & MOD_MASK_GUI);
     oled_advance_char();
 
-    oled_write(get_time(), false);
+    oled_write(get_time_str(), false);
 
 /* Matrix display is 12 x 12 pixels */
 #define MATRIX_DISPLAY_X 0
@@ -236,7 +227,7 @@ void draw_clock(void) {
     oled_set_cursor(0, 0);
     oled_write(get_date(), false);
     oled_set_cursor(0, 2);
-    oled_write(get_time(), false);
+    oled_write(get_time_str(), false);
 
     oled_set_cursor(12, 0);
     oled_write_P(PSTR(" ENC "), false);
